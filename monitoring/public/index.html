@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>BSREA Monitoring</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>
+        <div>
+          <h1>BSREA Monitoring</h1>
+          <div class="muted" id="subtitle">Websites, API and server</div>
+        </div>
+      </div>
+      <a class="status-pill" id="status-pill" href="/" hidden></a>
+      <div class="header-actions">
+        <button class="icon-btn" id="refresh" type="button" title="Refresh now">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+          <span class="visually-hidden">Refresh now</span>
+        </button>
+        <button class="icon-btn" id="theme" type="button" title="Switch light or dark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <span class="visually-hidden">Switch light or dark</span>
+        </button>
+        <form method="post" action="/logout"><button class="icon-btn" type="submit">Sign out</button></form>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Pages" id="tabs">
+      <a href="/" data-page="overview">Overview</a>
+      <a href="/traffic" data-page="traffic">Traffic</a>
+      <a href="/performance" data-page="performance">Performance</a>
+      <a href="/server" data-page="server">Server</a>
+      <a href="/security" data-page="security">Security</a>
+      <a href="/uptime" data-page="uptime">Uptime &amp; alerts</a>
+      <a href="/membership" data-page="membership">Membership</a>
+    </nav>
+    <div class="filters">
+      <div class="ranges" role="group" aria-label="Time range" id="ranges">
+        <button type="button" data-range="1h">Last hour</button>
+        <button type="button" data-range="24h">24 hours</button>
+        <button type="button" data-range="7d">7 days</button>
+        <button type="button" data-range="30d">30 days</button>
+        <button type="button" data-range="90d">90 days</button>
+        <button type="button" data-range="1y">12 months</button>
+      </div>
+      <div class="updated" id="updated" aria-live="polite">Loading…</div>
+    </div>
+  </header>
+
+  <main id="main" class="loading">
+
+    <!-- ===================== Overview ===================== -->
+    <section data-page="overview" aria-label="Overview">
+      <div id="banner"></div>
+      <div id="checks"></div>
+      <div class="kpis" id="kpis"></div>
+      <div id="notices"></div>
+    </section>
+
+    <section class="block" data-page="overview">
+      <div class="block-head">
+        <div><h2>What to do</h2><p>What the numbers say about problems, scaling and hardening, most urgent first</p></div>
+      </div>
+      <div class="advice" id="advice"></div>
+      <details class="guide">
+        <summary>How to grow the server, step by step</summary>
+        <div class="card mt-10">
+          <p class="small mt-0">Take one step at a time, and only when the advice above asks for it. For a membership association's website, the first three steps are free and should last for years.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>When the advice says</th><th>Do this</th><th>Cost</th></tr></thead>
+              <tbody>
+                <tr><td>Memory is short, or apps restart</td><td>Move to Oracle's Always Free <strong>Ampere A1</strong> server: up to 4 cores and 24 GB. Virus scanning of uploads can then be switched on.</td><td>Free</td></tr>
+                <tr><td>CPU is busy</td><td>Give the Ampere A1 more cores (stop the server, change its shape, start it).</td><td>Free up to 4 cores</td></tr>
+                <tr><td>Disk is filling up</td><td>Grow the boot volume (200 GB free in total), or move uploaded documents to Object Storage.</td><td>Free</td></tr>
+                <tr><td>Pages are slow, many bots, attacks, or traffic grows</td><td>Put <strong>Cloudflare</strong> in front: it caches pages and stops large attacks before they reach the server.</td><td>Free</td></tr>
+                <tr><td>One API route is slow</td><td>Fix that route: a database index, or PDF and file work moved off the request. More hardware rarely fixes one slow route.</td><td>Developer time</td></tr>
+                <tr><td>Thousands of requests a minute, every day</td><td>Only then: PostgreSQL instead of SQLite, and a second server behind a load balancer.</td><td>Paid</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===================== Traffic ===================== -->
+    <section class="block first" data-page="traffic">
+      <div class="block-head"><div><h2>Traffic</h2><p>Real people opening pages. Bots, scanners and page prefetches are left out.</p></div></div>
+      <div class="grid cols-3">
+        <div class="card span-2" data-chart="views"></div>
+        <div class="card"><div class="card-head"><div><h3>Most viewed pages</h3><p id="pages-sub">In this period</p></div></div><div id="pages"></div></div>
+        <div class="card span-2" data-chart="daily"></div>
+        <div class="card"><div class="card-head"><div><h3>Traffic in numbers</h3><p>In this period</p></div></div><div id="traffic-facts"></div></div>
+      </div>
+    </section>
+
+    <!-- ===================== Performance ===================== -->
+    <section class="block first" data-page="performance">
+      <div class="block-head"><div><h2>Performance</h2><p>How long the server takes to answer (95% of requests are faster than the line), and failed requests</p></div></div>
+      <div class="grid cols-2">
+        <div class="card" data-chart="latency"></div>
+        <div class="card" data-chart="errors"></div>
+        <div class="card span-2"><div class="card-head"><div><h3>API routes</h3><p>Busiest first. Rows shaded when 5% of requests take over a second.</p></div></div><div id="routes"></div></div>
+      </div>
+    </section>
+
+    <!-- ===================== Server ===================== -->
+    <section class="block first" data-page="server">
+      <div class="block-head"><div><h2>Server</h2><p id="server-sub">The machine everything runs on</p></div></div>
+      <div class="meters" id="meters"></div>
+      <div class="grid cols-2 mt-14">
+        <div class="card" data-chart="system"></div>
+        <div class="card" data-chart="network"></div>
+      </div>
+    </section>
+    <section class="block" data-page="server">
+      <div class="block-head"><div><h2>Apps</h2><p>The programs PM2 keeps running. One restart per deploy is normal.</p></div></div>
+      <div class="grid cols-2">
+        <div class="card"><div class="card-head"><div><h3>Right now</h3></div></div><div id="apps-table"></div></div>
+        <div class="card" data-chart="appmem"></div>
+      </div>
+    </section>
+
+    <!-- ===================== Security ===================== -->
+    <section class="block first" data-page="security">
+      <div class="block-head"><div><h2>Security</h2><p>Attacks are blocked automatically. You are only warned when real visitors are affected.</p></div></div>
+      <div id="verdict"></div>
+      <div class="kpis" id="security-kpis"></div>
+      <div class="grid cols-2 mt-14">
+        <div class="card" data-chart="visitors-vs-bots"></div>
+        <div class="card" data-chart="attempts"></div>
+      </div>
+    </section>
+    <section class="block" data-page="security">
+      <div class="block-head"><div><h2>Blocked right now</h2><p>Addresses that attacked. Each block ends by itself; unblock early if a real person was caught.</p></div></div>
+      <div class="card" id="blocked"></div>
+    </section>
+    <section class="block" data-page="security">
+      <div class="block-head"><div><h2>Attack history</h2><p>Every attack in this period, and whether visitors noticed</p></div></div>
+      <div class="card" id="episodes"></div>
+      <details class="guide">
+        <summary>How the protection works</summary>
+        <div class="card mt-10 prose">
+          <p><strong>Every visitor</strong> may make 30 requests a second (bursts up to 150, for a page with all its pictures). People never get near this. Floods are refused with "too many requests".</p>
+          <p><strong>Addresses are blocked</strong> for an hour (longer if they come back) when they do what no real visitor does: ask for files that don't exist on this site (like <code>.env</code>, <code>.php</code> or <code>wp-login</code>; 8 times in 10 minutes), get the staff password wrong 15 times in 10 minutes, or make 1,500 requests in 5 minutes. This server, private networks and the addresses in <code>ALLOW_IPS</code> are never blocked.</p>
+          <p><strong>You are warned</strong> (here, and on your phone) only when real visitors are affected: the site stops answering, visitors get errors, pages become very slow, or the server is overloaded. An attack that is stopped while visitors are fine is only listed here.</p>
+          <p><strong>Very large attacks</strong> (thousands of computers at once) can fill the server's connection before nginx sees them. If that happens you will be warned, and the fix is Cloudflare's free plan with "Under Attack" mode (see the README).</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===================== Uptime & alerts ===================== -->
+    <section class="block first" data-page="uptime">
+      <div class="block-head"><div><h2>Uptime</h2><p>Checked every 5 minutes. Each block is one slice of the period: green up, red down at least once, grey not checked.</p></div></div>
+      <div class="card" id="uptime-rows"></div>
+    </section>
+    <section class="block" data-page="uptime">
+      <div class="block-head">
+        <div><h2>Alerts</h2><p id="alerts-sub">Sent when something breaks, every few hours while it stays broken, and when it is fixed</p></div>
+        <button class="btn" type="button" id="test-alert">Send a test alert</button>
+      </div>
+      <div class="alert-list" id="alert-list"></div>
+    </section>
+
+    <!-- ===================== Membership ===================== -->
+    <section class="block first" data-page="membership">
+      <div class="block-head"><div><h2>Membership &amp; data</h2><p>Counts from the membership system, read-only. No names or documents are read.</p></div></div>
+      <div class="kpis mt-0" id="biz-kpis"></div>
+      <div class="card mt-14" data-chart="applications"></div>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "bsrea-monitoring",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BSREA monitoring dashboard: watches the websites, API and server, alerts on problems, advises on scaling",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/start.ts",
+    "dev": "node --watch src/start.ts",
+    "set-password": "node scripts/set-password.ts",
+    "test-alert": "node scripts/test-alert.ts",
+    "demo-data": "DATA_FILE=data/demo.db node scripts/demo-data.ts",
+    "test": "DATA_FILE=:memory: MONITOR_ENV_FILE=/dev/null node --test --test-concurrency=1 'tests/*.test.ts'",
+    "typecheck": "tsc --noEmit",
+    "demo": "DATA_FILE=data/demo.db COLLECT=0 COOKIE_SECURE=0 BACKEND_DB=data/none.db node src/start.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3"
+  }
+}

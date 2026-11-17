@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Builds
+.next/
+.next-*/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Env files (commit only .env.example)
+.env
+.env.*
+!.env.example
+
+# Logs, coverage, OS/editor files
+*.log
+npm-debug.log*
+coverage/
+.DS_Store
+.vscode/*
+!.vscode/settings.json
+.idea/
+
+# Local uploads
+storage/
+
+# Personal data: never commit
+*.private.json
+*.db
+*.db-wal
+*.db-shm
+*.jsonl
+backups/

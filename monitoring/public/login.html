@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Sign in · BSREA Monitoring</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/login.js"></script>
+</head>
+<body>
+  <div class="login-page">
+    <div class="card login-card">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>
+        <div><h1>BSREA Monitoring</h1><div class="muted">For the people who look after the website</div></div>
+      </div>
+      <p class="login-error" id="error" role="alert" hidden></p>
+      <form method="post" action="/login">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+        <button class="btn primary" type="submit">Sign in</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

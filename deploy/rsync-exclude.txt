@@ -1,0 +1,17 @@
+# Never copied to the server by "rsync --exclude-from=deploy/rsync-exclude.txt"
+node_modules/
+.next/
+.next-*/
+.env
+.env.*
+!.env.example
+storage/
+backups/
+*.db
+*.db-wal
+*.db-shm
+*.jsonl
+*.private.json
+*.log
+coverage/
+IT Officer.jpg

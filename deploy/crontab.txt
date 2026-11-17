@@ -1,0 +1,8 @@
+# BSREA scheduled jobs. Install with:  crontab -e   (as the user that runs the apps)
+# Change /srv/bsrea if the project lives elsewhere.
+
+# 02:15 every night: encrypted backup (checked straight after), then delete expired data
+15 2 * * *  cd /srv/bsrea/backend && npm run -s backup >> /srv/bsrea/backend/storage/backup.log 2>&1 && npm run -s retention >> /srv/bsrea/backend/storage/retention.log 2>&1
+
+# 03:00 every night: copy the backups off the server (set up rclone first, see docs/deployment.md)
+0 3 * * *   rclone sync /var/backups/bsrea offsite:bsrea-backups >> /srv/bsrea/backend/storage/offsite.log 2>&1

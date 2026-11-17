@@ -1,0 +1,7 @@
+{
+  // Compiles the API server to plain JavaScript in dist/ ("npm run build"), so production
+  // runs with node instead of ts-node and uses much less memory. Scripts still run with ts-node.
+  "extends": "./tsconfig.json",
+  "include": [],
+  "files": ["server.ts"]
+}
