@@ -2,6 +2,8 @@
 
 A dashboard that watches the BSREA websites, API and server, tells you when something breaks, and shows when the server needs to grow.
 
+**Live:** https://monitor.bsrea-demo.duckdns.org (installed 17 November 2026; PM2 app `bsrea-monitor`).
+
 It is a separate app in its own folder. It **doesn't change the website, the staff panel or the API**: it watches them from outside, through the nginx log, the server's own counters, PM2, and the membership database opened read-only.
 
 Seven pages, each with its own address. The header shows "All working" or "N problems" on every page:
@@ -26,12 +28,14 @@ After the next `deploy/push.sh` (it copies this folder to the server along with 
 
 ```bash
 cd /srv/bsrea/monitoring
-bash deploy/install.sh monitor.bsrea-demo.duckdns.org   # nginx log, dashboard address, log rotation, starts it in PM2
+bash deploy/install.sh monitor.bsrea-demo.duckdns.org   # nginx log + attack protection, dashboard address, log rotation, PM2
 sudo certbot --nginx -d monitor.bsrea-demo.duckdns.org  # HTTPS
 npm run set-password                         # the dashboard password (at least 12 characters)
 ```
 
 Open `https://monitor.bsrea-demo.duckdns.org` and sign in.
+
+`install.sh` is safe to run again (after an update that changes the nginx files, for example). It adds files and never edits the BSREA site's own nginx file. Each nginx file is tested before nginx reloads; if nginx rejects one, it is removed again and the sites keep running. It also lets this user read the nginx logs (through an ACL, so nothing needs restarting).
 
 **Alerts to your phone.** Install the free **ntfy** app (Android or iPhone) and subscribe to a topic with a long, random name, for example `bsrea-alerts-k7f3q9x2m`. Anyone who knows the name can read the alerts, so don't use an easy one. Then:
 
@@ -67,6 +71,10 @@ When the website moves to its own domain:
 ssh ubuntu@SERVER "pm2 reload bsrea-monitor"
 ```
 
+If `deploy/nginx-*.conf` changed, run `bash deploy/install.sh monitor.bsrea-demo.duckdns.org` on the server instead.
+
+**Known:** reloading the dashboard counts as a restart, so a few minutes later it reports "App bsrea-monitor: restarted", then "back to normal". That pair after your own deploy is expected.
+
 ## What alerts look like
 
 You get one message when something breaks, a reminder every 6 hours while it stays broken, and one when it is fixed. Each says what is wrong and what to do:
@@ -77,7 +85,9 @@ PROBLEM: Nightly backup. Last backup 31 hours ago
   What to do: tail /srv/bsrea/backend/storage/backup.log
 ```
 
-| Check | Every 5 minutes, it is a problem when… |
+Checked every 5 minutes, except the last two, which run every minute:
+
+| Check | It is a problem when… |
 | --- | --- |
 | Public website, Staff panel, API | it doesn't answer, answers with an error, or takes over 5 seconds |
 | HTTPS certificate | it expires within 14 days (certbot's automatic renewal failed) |
@@ -130,7 +140,7 @@ Nothing personal is stored, apart from the address of an attacker while it is bl
 
 ## Size
 
-One Node.js process using about 70-100 MB of memory, with no packages to install (Node 24 runs the TypeScript directly, and SQLite is built in). Detail is kept per minute for 35 days, then as hourly and daily totals. That is a few MB a month.
+One Node.js process using about 120 MB of memory on the server (PM2 restarts it above 160 MB), with no packages to install (Node 24 runs the TypeScript directly, and SQLite is built in). Detail is kept per minute for 35 days, then as hourly and daily totals. That is a few MB a month.
 
 ## Trying it on a computer
 
@@ -140,19 +150,22 @@ npm run demo-data   # 60 days of made-up numbers in data/demo.db (never the real
 npm run demo        # http://127.0.0.1:3005, password: demo-password-123
 ```
 
-For development: `npm install` (TypeScript, for checking types only), `npm test`, `npm run typecheck`.
+For development: `npm install` (TypeScript, for checking types only), `npm test` (22 tests: log reading, checks and alerts, sign-in, every page, attack protection), `npm run typecheck`.
 
 ## Files
 
 | | |
 | --- | --- |
-| `src/server.ts` | the web server: sign-in, the dashboard page, `/api/dashboard` |
+| `src/start.ts` | starts everything (`npm start`, `npm run demo` and PM2 run this file) |
+| `src/server.ts` | the web server: sign-in, the seven page addresses, `/api/page/<page>`, `/api/unblock`, `/api/test-alert`, `/healthz` |
 | `src/collector.ts` | what is collected and when (every minute, every 5 minutes, hourly, nightly) |
 | `src/collect/nginx.ts` | reads the nginx log: visits, speed, errors, API routes |
 | `src/collect/system.ts`, `apps.ts`, `checks.ts`, `business.ts` | server counters, PM2, the checks, membership counts |
 | `src/alerts.ts` | when to alert, and sending to ntfy, Discord or Slack |
 | `src/security.ts` | attack detection, the effect on visitors, automatic blocking; **the attack thresholds are here** (`RULES`) |
 | `src/dashboard.ts` | turns the stored numbers into charts and advice; **the advice thresholds are here** |
-| `public/` | the page: `app.js` (sections), `charts.js` (charts), `style.css` |
+| `public/` | the pages: `index.html` (all seven pages' sections), `app.js` (shows the page in the address, draws it), `charts.js` (charts), `style.css`, and the sign-in page (`login.html`, `login.js`) |
+| `scripts/` | `set-password.ts`, `test-alert.ts`, `demo-data.ts` |
+| `tests/` | `collect.test.ts`, `server.test.ts`, `security.test.ts` |
 | `deploy/` | `install.sh`, the nginx files (log, protection, dashboard address) |
 | `ecosystem.config.cjs` | the PM2 app `bsrea-monitor` |
