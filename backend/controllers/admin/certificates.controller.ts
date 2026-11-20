@@ -15,7 +15,15 @@ import { idParam } from "./shared";
 /*--GET /api/v1/admin/certificates--*/
 export const listCertificates = (req: Request, res: Response) => {
   const rows = db
-    .prepare(`SELECT * FROM certificates ORDER BY created_at DESC LIMIT 500`)
+    .prepare(
+      `SELECT c.*,
+         (SELECT COUNT(*) FROM certificate_scans s WHERE s.certificate_id = c.id) AS scans,
+         (SELECT MAX(at) FROM certificate_scans s WHERE s.certificate_id = c.id) AS last_scan_at,
+         -- checks made while the certificate was already revoked or expired: someone may still be showing it
+         (SELECT COUNT(*) FROM certificate_scans s WHERE s.certificate_id = c.id AND s.state != 'valid') AS suspicious_scans,
+         (SELECT MAX(at) FROM certificate_scans s WHERE s.certificate_id = c.id AND s.state != 'valid') AS last_suspicious_at
+       FROM certificates c ORDER BY c.created_at DESC LIMIT 500`,
+    )
     .all() as CertificateRow[];
   sendResponse(
     res,

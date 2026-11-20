@@ -1,0 +1,51 @@
+{
+  "_comment": "The form values used in the demo (docs/demo-kit/README.md). backend/tests/demo-kit.test.ts runs exactly these through the system, so the printed script stays true. All made up: example.com never receives mail and 010... is not a Bangladeshi mobile range.",
+  "honest": {
+    "membershipType": "general",
+    "origin": "local",
+    "company": "Demo Sunrise Solar Ltd",
+    "tradeLicenseNo": "TRAD/DNCC/DEMO-5001/2026",
+    "binNo": "000-DEMO-5001",
+    "companyEmail": "info@sunrise.example.com",
+    "companyPhone": "01000009001",
+    "address": "House 9, Road 3, Gulshan, Dhaka",
+    "applicantName": "Demo Applicant One",
+    "applicantDesignation": "Managing Director",
+    "applicantEmail": "md@sunrise.example.com",
+    "applicantMobile": "01000009002",
+    "applicantNid": "DEMO-NID-90001",
+    "declaration": "yes"
+  },
+  "copycat": {
+    "membershipType": "general",
+    "origin": "local",
+    "company": "M/S. Demo Sunrise Solar Limited",
+    "tradeLicenseNo": "TRAD/DNCC/DEMO-5002/2026",
+    "binNo": "000-DEMO-5002",
+    "companyEmail": "info@copycat.example.com",
+    "companyPhone": "01000009011",
+    "address": "House 1, Road 1, Banani, Dhaka",
+    "applicantName": "Demo Applicant Two",
+    "applicantDesignation": "Director",
+    "applicantEmail": "director@copycat.example.com",
+    "applicantMobile": "01000009012",
+    "applicantNid": "DEMO-NID-90002",
+    "declaration": "yes"
+  },
+  "lookalike": {
+    "membershipType": "general",
+    "origin": "local",
+    "company": "Demo Sunnrise Solar Ltd",
+    "tradeLicenseNo": "TRAD/DNCC/DEMO-5003/2026",
+    "binNo": "000-DEMO-5003",
+    "companyEmail": "info@sunnrise.example.com",
+    "companyPhone": "01000009001",
+    "address": "House 12, Road 7, Uttara, Dhaka",
+    "applicantName": "Demo Applicant Three",
+    "applicantDesignation": "CEO",
+    "applicantEmail": "ceo@sunnrise.example.com",
+    "applicantMobile": "01000009022",
+    "applicantNid": "DEMO-NID-90003",
+    "declaration": "yes"
+  }
+}

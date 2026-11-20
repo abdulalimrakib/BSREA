@@ -3,6 +3,7 @@ import { QrCode } from "lucide-react";
 import { Container } from "@/components/site/blocks";
 import { panelClass } from "@/lib/styles";
 import VerifyCodeForm from "@/components/membership/verify-code-form";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Verify a Certificate" };
 
@@ -22,7 +23,8 @@ export default function VerifyPage() {
         </h1>
         <p className="mt-4 text-lg leading-8 text-brand-slate">
           Scan the QR code on a BSREA membership certificate or NOC, or type the
-          verification code printed under it.
+          verification code printed under it. Certificates can only be checked
+          at <strong className="font-mono">{new URL(site.url).host}/verify</strong>.
         </p>
         <div className={`mt-10 text-left ${panelClass}`}>
           <VerifyCodeForm />

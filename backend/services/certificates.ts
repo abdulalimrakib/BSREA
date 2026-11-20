@@ -25,6 +25,10 @@ export type CertificateRow = {
 
 export const verifyUrl = (code: string) => `${envConfig.PUBLIC_SITE_URL}/verify/${code}`;
 
+/*--The address printed on certificates, e.g. "bsrea-demo.duckdns.org/verify". It comes from PUBLIC_SITE_URL,
+  so moving to the real domain only means changing that setting (certificates issued before keep the old address).--*/
+export const officialVerifyAddress = () => `${new URL(envConfig.PUBLIC_SITE_URL).host}/verify`;
+
 // Codes are 24 url-safe characters (144 random bits): impossible to guess
 export const VERIFY_CODE = /^[A-Za-z0-9_-]{24}$/;
 
@@ -102,8 +106,11 @@ export const certificatePdf = async (c: CertificateRow) => {
   center(`for the period ${formatDate(c.valid_from)} to ${formatDate(c.valid_until)}.`, height - 332, serifItalic, 16);
 
   // Details, bottom left
+  // The member number is shown on the verify page too, as one more detail to compare with the paper
+  const memberNo = (db.prepare(`SELECT member_no FROM members WHERE id = ?`).get(c.member_id) as { member_no: string } | undefined)?.member_no ?? "";
   const details = [
     ["Certificate No.", c.number],
+    ["Member No.", memberNo],
     ["Issued on", formatDate(c.created_at)],
     ["Valid until", formatDate(c.valid_until)],
   ];
@@ -120,11 +127,19 @@ export const certificatePdf = async (c: CertificateRow) => {
   const qr = await QRCode.toBuffer(verifyUrl(c.verify_code), { errorCorrectionLevel: "M", margin: 1, width: 300 });
   const qrImage = await pdf.embedPng(qr);
   page.drawImage(qrImage, { x: width - 175, y: 75, width: 105, height: 105 });
-  const scan = "Scan to verify";
-  page.drawText(scan, { x: width - 122.5 - sans.widthOfTextAtSize(scan, 9) / 2, y: 62, size: 9, font: sans, color: navy });
-  // The code in text too, for typing in at /verify
-  const codeLine = `Code: ${c.verify_code}`;
-  page.drawText(codeLine, { x: width - 122.5 - sans.widthOfTextAtSize(codeLine, 7) / 2, y: 50, size: 7, font: sans, color: navy });
+  // Under the QR code: where to check it, and the code in text for typing in by hand
+  const address = officialVerifyAddress();
+  const underQr = (text: string, y: number, font: typeof sans, size: number) =>
+    page.drawText(text, { x: width - 122.5 - font.widthOfTextAtSize(text, size) / 2, y, size, font, color: navy });
+  underQr("Scan, or enter the code at", 64, sans, 8);
+  underQr(address, 54, sansBold, 8);
+  underQr(`Code: ${c.verify_code}`, 44, sans, 7);
+
+  // Bottom left: a fake QR code could open a look-alike website, so say which address is the real one
+  const warning = `Check this certificate only at ${address}. If a QR code opens any other address, the certificate is fake.`;
+  let warningSize = 8;
+  while (sans.widthOfTextAtSize(warning, warningSize) > width - 260 && warningSize > 6) warningSize -= 0.5;
+  page.drawText(warning, { x: 50, y: 44, size: warningSize, font: sans, color: green });
 
   return Buffer.from(await pdf.save());
 };

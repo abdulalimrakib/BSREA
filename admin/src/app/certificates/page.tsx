@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { Download, ExternalLink } from "lucide-react";
+import { AlertTriangle, Download, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { can, useStaff } from "@/components/auth-gate";
@@ -17,6 +17,11 @@ export default function CertificatesPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Certificates</h1>
+      <p className="text-sm text-muted-foreground">
+        &ldquo;Checks&rdquo; counts how often the public verify page was opened for each certificate. A revoked or expired certificate that is
+        still being checked (shown in amber) means someone may still be showing it to people: contact the company.
+        Opening the verify page from here counts as a check too.
+      </p>
       {!data ? (
         <Loading error={error} />
       ) : data.length === 0 ? (
@@ -30,6 +35,7 @@ export default function CertificatesPage() {
               <TableHead>Valid</TableHead>
               <TableHead>Issued</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Checks</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -45,6 +51,17 @@ export default function CertificatesPage() {
                 <TableCell>
                   <StatusBadge status={c.state} />
                   {c.revoked_reason && <div className="text-xs text-muted-foreground">{c.revoked_reason}</div>}
+                </TableCell>
+                <TableCell className="text-xs">
+                  <div>{c.scans}</div>
+                  {c.last_scan_at && <div className="text-muted-foreground">last {formatDateTime(c.last_scan_at)}</div>}
+                  {c.suspicious_scans > 0 && (
+                    <div className="mt-1 inline-flex items-center gap-1 font-medium text-amber-600">
+                      <AlertTriangle className="size-3.5" />
+                      {c.suspicious_scans} after it ended
+                      {c.last_suspicious_at && <> (last {formatDateTime(c.last_suspicious_at)})</>}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell className="space-x-2 text-right whitespace-nowrap">
                   <a href={`${SITE_URL}/verify/${c.verifyCode}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">

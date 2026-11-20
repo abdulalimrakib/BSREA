@@ -74,6 +74,7 @@ export const submitApplication = (form: FormData) => request<{ reference: string
 export type VerifiedCertificate = {
   type: "membership" | "noc";
   number: string;
+  memberNo: string;
   company: string;
   membershipType: string;
   validFrom: string;

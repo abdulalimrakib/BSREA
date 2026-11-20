@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, BadgeCheck, FileText, Users } from "lucide-react";
+import { AlertTriangle, BadgeCheck, FileText, ScanEye, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loading, useApi } from "@/components/common";
 import { useStaff } from "@/components/auth-gate";
@@ -17,6 +17,13 @@ export default function Dashboard() {
         { label: "Need duplicate check", value: data.applicationsFlagged, href: "/applications", Icon: AlertTriangle, warn: data.applicationsFlagged > 0 },
         { label: "Active members", value: data.members, href: "/members", Icon: Users },
         { label: "Valid certificates", value: data.certificatesValid, href: "/certificates", Icon: BadgeCheck },
+        {
+          label: "Cancelled/expired certificates checked (30 days)",
+          value: data.certificatesSuspiciousScans,
+          href: "/certificates",
+          Icon: ScanEye,
+          warn: data.certificatesSuspiciousScans > 0,
+        },
       ]
     : [];
 
@@ -26,7 +33,7 @@ export default function Dashboard() {
       {!data ? (
         <Loading error={error} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {tiles.map(({ label, value, href, Icon, warn }) => (
             <Link key={label} href={href}>
               <Card className={warn ? "border-amber-400" : undefined}>

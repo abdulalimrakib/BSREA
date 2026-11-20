@@ -59,5 +59,13 @@ export const decryptText = (data: string) => decryptBuffer(Buffer.from(data, "ba
 export const blindIndex = (normalisedValue: string) =>
   crypto.createHmac("sha256", envConfig.BLIND_INDEX_KEY).update(normalisedValue).digest("hex");
 
+/*--Shorten an IP address so it shows the area, not the person: "203.0.113.45" -> "203.0.113.x",
+  "2001:db8:85a3::8a2e:370:7334" -> "2001:db8:85a3:x". Express may give IPv4 as "::ffff:203.0.113.45".--*/
+export const maskIp = (ip: string) => {
+  const v4 = ip.replace(/^::ffff:/i, "");
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(v4)) return v4.split(".").slice(0, 3).join(".") + ".x";
+  return ip.split(":").slice(0, 3).join(":") + ":x";
+};
+
 /*--Show only the last characters: "1234567890" -> "******7890"--*/
 export const mask = (value: string, visible = 4) => (value.length <= visible ? "*".repeat(value.length) : "*".repeat(value.length - visible) + value.slice(-visible));

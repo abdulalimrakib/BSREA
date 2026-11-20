@@ -171,6 +171,11 @@ export default function ApplicationPage({ params }: { params: Promise<{ id: stri
           <CardTitle>Documents</CardTitle>
         </CardHeader>
         <CardContent>
+          {!app.documents.some((d) => d.kind === "payment_receipt") && (
+            <p role="alert" className="mb-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              No payment receipt was uploaded. Confirm the membership fee was received before approving.
+            </p>
+          )}
           <ul className="divide-y">
             {app.documents.map((d) => (
               <li key={d.id} className="flex items-center justify-between gap-4 py-2 text-sm">

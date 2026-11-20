@@ -15,7 +15,9 @@
     "reset-password": "ts-node scripts/reset-password.ts",
     "build": "tsc -p tsconfig.build.json",
     "start:prod": "node dist/server.js",
-    "demo-data": "ts-node scripts/demo-data.ts"
+    "demo-data": "ts-node scripts/demo-data.ts",
+    "demo-reset": "ts-node scripts/demo-reset.ts",
+    "demo-kit-files": "ts-node scripts/make-demo-kit.ts"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

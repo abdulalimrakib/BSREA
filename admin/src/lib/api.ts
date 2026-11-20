@@ -74,7 +74,13 @@ export const setupTwoFactor = (password: string) => post<{ secret: string; qr: s
 export const enableTwoFactor = (code: string) => post<null>("/api/v1/auth/two-factor/enable", { code });
 export const disableTwoFactor = (password: string, code: string) => post<null>("/api/v1/auth/two-factor/disable", { password, code });
 
-export type Summary = { applicationsOpen: number; applicationsFlagged: number; members: number; certificatesValid: number };
+export type Summary = {
+  applicationsOpen: number;
+  applicationsFlagged: number;
+  members: number;
+  certificatesValid: number;
+  certificatesSuspiciousScans: number; // revoked/expired certificates someone checked in the last 30 days
+};
 export const getSummary = () => request<Summary>("/api/v1/admin/summary");
 
 export type DuplicateMatch = {
@@ -174,6 +180,10 @@ export type Certificate = {
   state: "valid" | "expired" | "revoked";
   revoked_reason: string | null;
   created_at: string;
+  scans: number;
+  last_scan_at: string | null;
+  suspicious_scans: number; // checks made while it was already revoked or expired
+  last_suspicious_at: string | null;
 };
 export const getCertificates = () => request<Certificate[]>("/api/v1/admin/certificates");
 export const certificatePdfUrl = (id: number) => `${API_URL}/api/v1/admin/certificates/${id}/pdf`;

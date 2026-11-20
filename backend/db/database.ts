@@ -9,7 +9,7 @@ import envConfig from "../config/env.config";
 // Files this process creates (database, documents, messages) are readable by this user only
 process.umask(0o077);
 
-const SCHEMA_VERSION = 3; // 2 = personal contact details encrypted, 3 = two-factor login, per-IP lockout, document retention
+const SCHEMA_VERSION = 4; // 2 = personal contact details encrypted, 3 = two-factor login, per-IP lockout, document retention, 4 = certificate scan log
 
 if (envConfig.DATABASE_FILE !== ":memory:") {
   fs.mkdirSync(path.dirname(envConfig.DATABASE_FILE), { recursive: true, mode: 0o700 });
@@ -27,9 +27,11 @@ if (envConfig.DATABASE_FILE !== ":memory:") {
 // Refuse to run on a database made by an older version, instead of silently mixing plain and encrypted data
 const existingTables = (db.prepare(`SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table'`).get() as { n: number }).n;
 const version = (db.prepare(`PRAGMA user_version`).get() as { user_version: number }).user_version;
-// Version 2 can be upgraded in place (only new columns and tables are added); anything older can't
+// Versions 2 and 3 can be upgraded in place (only new columns and tables are added); anything older can't.
+// 3 -> 4 only adds the certificate_scans table, which CREATE TABLE IF NOT EXISTS below takes care of.
 const upgradeFrom2 = existingTables > 0 && version === 2;
-if (existingTables > 0 && version !== SCHEMA_VERSION && !upgradeFrom2) {
+const upgradeable = existingTables > 0 && (version === 2 || version === 3);
+if (existingTables > 0 && version !== SCHEMA_VERSION && !upgradeable) {
   throw new Error(
     `The database at ${envConfig.DATABASE_FILE} uses an older layout (version ${version}, expected ${SCHEMA_VERSION}). ` +
       `It must be migrated, or deleted and re-created with "npm run seed" if it holds no real data.`
@@ -224,6 +226,19 @@ db.exec(`
   );
   -- One valid membership certificate per member per period
   CREATE UNIQUE INDEX IF NOT EXISTS certificates_one_valid ON certificates(member_id, type, valid_from) WHERE status = 'valid' AND type = 'membership';
+
+  -- Every public check of a certificate (QR scan or typed code). A revoked or expired certificate that keeps being
+  -- checked is a sign that someone is still showing it to people; staff see these on the dashboard.
+  -- Only a shortened IP address is kept (e.g. 203.0.113.x), and rows are deleted after a year ("npm run retention").
+  CREATE TABLE IF NOT EXISTS certificate_scans (
+    id              INTEGER PRIMARY KEY,
+    certificate_id  INTEGER NOT NULL REFERENCES certificates(id),
+    at              TEXT NOT NULL,
+    state           TEXT NOT NULL CHECK (state IN ('valid', 'expired', 'revoked')), -- what the checker was shown
+    ip_masked       TEXT
+  );
+  CREATE INDEX IF NOT EXISTS certificate_scans_certificate ON certificate_scans(certificate_id, at);
+  CREATE INDEX IF NOT EXISTS certificate_scans_state ON certificate_scans(state, at);
 
   CREATE TABLE IF NOT EXISTS audit_log (
     id            INTEGER PRIMARY KEY,

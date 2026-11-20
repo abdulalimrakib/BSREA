@@ -10,6 +10,7 @@ import {
   deleteDocument,
   detectFileType,
   DOCUMENT_KINDS,
+  isRequired,
   storeDocument,
   type DocumentKind,
   type StoredDocument,
@@ -49,7 +50,7 @@ export const submitApplication = async (req: Request, res: Response) => {
   for (const kind of kinds) {
     const file = files[kind]?.[0];
     if (!file) {
-      if (DOCUMENT_KINDS[kind].required)
+      if (isRequired(kind))
         errors[kind] = `Please upload the ${DOCUMENT_KINDS[kind].label}`;
       continue;
     }

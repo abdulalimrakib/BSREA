@@ -8,6 +8,8 @@ import { deleteDocument } from "./documents";
   Rejected applications lose their uploaded documents RETENTION_DAYS after the decision. The encrypted
   application record itself stays, so the duplicate checks and the audit trail still work.--*/
 
+const SCAN_DAYS = 365;
+
 export const purgeExpired = (
   db: DatabaseSync,
   { dryRun = false, days = envConfig.RETENTION_DAYS, time = Date.now() } = {},
@@ -59,16 +61,22 @@ export const purgeExpired = (
     ).n;
   const sessionsSql = `DELETE FROM sessions WHERE expires_at < ? OR last_seen_at < ?`;
   const failuresSql = `DELETE FROM login_failures WHERE updated_at < ? AND (locked_until IS NULL OR locked_until < ?)`;
+  // Certificate checks are kept for a year: long enough to see a pattern, without keeping visitor data for ever
+  const scansSql = `DELETE FROM certificate_scans WHERE at < ?`;
+  const scanCutoff = new Date(time - SCAN_DAYS * 86_400_000).toISOString();
   const sessions = count(sessionsSql, nowIso, idleCutoff);
   const loginFailures = count(failuresSql, dayAgo, nowIso);
+  const certificateScans = count(scansSql, scanCutoff);
   if (!dryRun) {
     db.prepare(sessionsSql).run(nowIso, idleCutoff);
     db.prepare(failuresSql).run(dayAgo, nowIso);
+    db.prepare(scansSql).run(scanCutoff);
   }
   return {
     applications: applications.length,
     documents,
     sessions,
     loginFailures,
+    certificateScans,
   };
 };

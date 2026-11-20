@@ -50,6 +50,9 @@ const envConfig = {
   // ClamAV virus scanner (clamd). When CLAMAV_HOST is set every upload is scanned, and uploads are refused if the scanner is down.
   CLAMAV_HOST: process.env.CLAMAV_HOST || "",
   CLAMAV_PORT: Number(process.env.CLAMAV_PORT) || 3310,
+  // The application form asks for the bank receipt of the membership fee. Set to 0 to make it optional while testing
+  // the process without paying; staff then see a warning on every application that has no receipt.
+  PAYMENT_RECEIPT_REQUIRED: process.env.PAYMENT_RECEIPT_REQUIRED !== "0",
 };
 
 /*--Settings a production server behind nginx must set itself. The defaults are made for a laptop, and on a server

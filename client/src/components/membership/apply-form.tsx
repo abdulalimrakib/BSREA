@@ -15,6 +15,10 @@ import { fieldClass, panelClass, primaryButtonClass } from "@/lib/styles";
 
 /*--Online membership application. The backend checks everything again; these checks only save a round trip.--*/
 
+// The fee receipt can be made optional while the process is being tested (set NEXT_PUBLIC_PAYMENT_REQUIRED=0 when
+// building, together with PAYMENT_RECEIPT_REQUIRED=0 in backend/.env)
+const PAYMENT_REQUIRED = process.env.NEXT_PUBLIC_PAYMENT_REQUIRED !== "0";
+
 const DOCUMENTS = [
   { name: "trade_license", label: "Trade Licence", required: true },
   {
@@ -35,8 +39,10 @@ const DOCUMENTS = [
   },
   {
     name: "payment_receipt",
-    label: "Pay Order or Fund Transfer Receipt",
-    required: true,
+    label: PAYMENT_REQUIRED
+      ? "Pay Order or Fund Transfer Receipt"
+      : "Pay Order or Fund Transfer Receipt (optional during testing)",
+    required: PAYMENT_REQUIRED,
   },
   {
     name: "memorandum",

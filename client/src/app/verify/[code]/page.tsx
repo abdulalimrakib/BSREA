@@ -20,8 +20,10 @@ export default async function VerifyCodePage({ params }: Props) {
         </h1>
         <CertificateCheck code={code} />
         <p className="mt-6 text-center text-xs text-brand-gray">
-          Only the details printed on the certificate are shown here. For
-          questions, contact the BSREA secretariat.
+          Only the details printed on the certificate are shown here. Each
+          check is recorded (without personal details) so BSREA notices
+          cancelled certificates that are still in use. For questions, contact
+          the BSREA secretariat.
         </p>
       </Container>
     </section>

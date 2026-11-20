@@ -22,6 +22,10 @@ export const DOCUMENT_KINDS = {
 
 export type DocumentKind = keyof typeof DOCUMENT_KINDS;
 
+/*--Must this document be uploaded? The payment receipt can be switched off for testing (PAYMENT_RECEIPT_REQUIRED=0).--*/
+export const isRequired = (kind: DocumentKind) =>
+  DOCUMENT_KINDS[kind].required && (kind !== "payment_receipt" || envConfig.PAYMENT_RECEIPT_REQUIRED);
+
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 /*--What the file really is, judged from its first bytes. Anything else is refused.--*/

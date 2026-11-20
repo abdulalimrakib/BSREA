@@ -8,6 +8,10 @@ import {
   type VerifiedCertificate,
 } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { site } from "@/lib/site";
+
+/*--The only real address for checking certificates (the website's own address, set when the site is built)--*/
+const officialHost = new URL(site.url).host;
 
 /*--Shows the result of checking a certificate code--*/
 export default function CertificateCheck({ code }: { code: string }) {
@@ -97,6 +101,8 @@ export default function CertificateCheck({ code }: { code: string }) {
         </dd>
         <dt className="font-semibold text-brand-navy">Number</dt>
         <dd className="font-mono">{result.number}</dd>
+        <dt className="font-semibold text-brand-navy">Member No.</dt>
+        <dd className="font-mono">{result.memberNo}</dd>
         <dt className="font-semibold text-brand-navy">Company</dt>
         <dd className="font-semibold">{result.company}</dd>
         {result.type === "membership" && (
@@ -112,6 +118,22 @@ export default function CertificateCheck({ code }: { code: string }) {
         <dt className="font-semibold text-brand-navy">Issued</dt>
         <dd>{formatDate(result.issuedAt)}</dd>
       </dl>
+      <div className="mx-auto mt-8 max-w-[520px] rounded-2xl border border-brand-navy/15 bg-white p-5 text-sm text-brand-navy">
+        <p className="font-semibold">Make sure the paper certificate is genuine</p>
+        <ol className="mt-2 list-decimal space-y-1.5 pl-5">
+          <li>
+            Your browser&apos;s address bar must show{" "}
+            <strong className="font-mono">{officialHost}</strong>. If it shows
+            any other address, the QR code is fake.
+          </li>
+          <li>
+            Every detail above (company name, certificate number, member number
+            and dates) must be exactly the same as on the paper. If anything is
+            different, the paper has been changed: do not accept it and contact
+            BSREA.
+          </li>
+        </ol>
+      </div>
     </div>
   );
 }

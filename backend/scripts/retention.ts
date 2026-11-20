@@ -13,5 +13,5 @@ import { purgeExpired } from "../services/retention";
 const dryRun = process.argv.includes("--dry");
 const result = purgeExpired(db, { dryRun });
 console.log(
-  `${dryRun ? "Would delete" : "Deleted"}: ${result.applications} rejected application(s) - ${result.documents} document(s); ${result.sessions} expired session(s); ${result.loginFailures} old login-failure record(s)`,
+  `${dryRun ? "Would delete" : "Deleted"}: ${result.applications} rejected application(s) - ${result.documents} document(s); ${result.sessions} expired session(s); ${result.loginFailures} old login-failure record(s); ${result.certificateScans} certificate check(s) older than a year`,
 );
