@@ -1,5 +1,12 @@
 import app from "./app";
-import envConfig from "./config/env.config";
+import envConfig, { productionProblems } from "./config/env.config";
+
+/*--Refuse to start on a production server with laptop settings (see productionProblems)--*/
+const problems = productionProblems();
+if (problems.length) {
+  console.error(`The API can't start: backend/.env is missing production settings:\n- ${problems.join("\n- ")}`);
+  process.exit(1);
+}
 
 /*--Create Server--*/
 const onListening = () => console.log(`Server running on port ${envConfig.PORT}!`);

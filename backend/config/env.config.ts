@@ -52,4 +52,20 @@ const envConfig = {
   CLAMAV_PORT: Number(process.env.CLAMAV_PORT) || 3310,
 };
 
+/*--Settings a production server behind nginx must set itself. The defaults are made for a laptop, and on a server
+  they fail quietly: without TRUST_PROXY every visitor looks like 127.0.0.1, so the whole internet shares one rate
+  limit and one login lockout. server.ts refuses to start while anything is listed here.--*/
+export const productionProblems = (env: NodeJS.ProcessEnv = process.env): string[] => {
+  if ((env.NODE_ENV || "development") !== "production") return [];
+  const problems: string[] = [];
+  if (!(Number(env.TRUST_PROXY) >= 1)) problems.push("TRUST_PROXY must be 1 (the API runs behind nginx)");
+  const origins = (env.CORS_ORIGINS ?? "").split(",").map((o) => o.trim()).filter(Boolean);
+  if (!origins.length) problems.push("CORS_ORIGINS must list the websites, e.g. https://bsreabd.org,https://admin.bsreabd.org");
+  else if (origins.some((o) => !o.startsWith("https://")))
+    problems.push("CORS_ORIGINS must contain https:// addresses only");
+  if (!env.PUBLIC_SITE_URL?.startsWith("https://"))
+    problems.push("PUBLIC_SITE_URL must be the public website's https:// address (it goes in certificate QR codes)");
+  return problems;
+};
+
 export default envConfig;

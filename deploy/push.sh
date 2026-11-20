@@ -10,7 +10,8 @@
 # The websites are built here (a small 1 GB server does not have the memory to build them) into
 # .next-prod folders, so a dev server running on this computer is not disturbed. Only code and the
 # finished builds are copied: never .env files, the database, uploaded documents, backups or the
-# private member list (see deploy/rsync-exclude.txt). Files that only exist on the server stay there.
+# private member list (see deploy/rsync-exclude.txt). --delete removes server files that are not here,
+# except the excluded paths (.env, storage/, backups/, monitoring/data/ ...), which are never touched.
 set -euo pipefail
 
 SERVER=${1:?"usage: deploy/push.sh ubuntu@SERVER_IP"}

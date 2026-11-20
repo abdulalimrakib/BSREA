@@ -14,4 +14,6 @@ backups/
 *.private.json
 *.log
 coverage/
+# Monitoring's data on the server, including blocklist.map, which nginx loads: deleting it breaks "nginx -t"
+monitoring/data/
 IT Officer.jpg

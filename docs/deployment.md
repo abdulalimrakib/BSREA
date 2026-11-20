@@ -257,5 +257,6 @@ pm2 restart all
 | 502 Bad Gateway | The app behind nginx isn't running: `pm2 restart all` |
 | "The backend gave an answer that can't be read" | `NEXT_PUBLIC_API_URL` was wrong when the site was built: fix `.env.production.local` and rebuild |
 | "Request blocked: unknown origin" | The website's address is missing from `CORS_ORIGINS` in `backend/.env`: add it, `pm2 restart bsrea-api` |
+| `bsrea-api` keeps restarting; its log says "missing production settings" | `backend/.env` lacks `TRUST_PROXY=1`, `CORS_ORIGINS` or an https `PUBLIC_SITE_URL`: add what the log lists, `pm2 restart bsrea-api` |
 | Uploads refused with "can't be checked right now" | ClamAV is down: `sudo systemctl status clamav-daemon` |
 | Forgot the admin password | `cd backend && npm run reset-password` |

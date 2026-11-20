@@ -12,7 +12,8 @@ router.post("/login", loginLimiter, asyncHandler(login));
 router.post("/logout", logout);
 // These work before two-factor login is set up, so a new staff member can reach the set-up screen
 router.get("/me", requireLogin, me);
-router.post("/change-password", requireLogin, asyncHandler(changePassword));
+// Rate-limited like login: it checks the current password, so a stolen session could otherwise guess it
+router.post("/change-password", requireLogin, loginLimiter, asyncHandler(changePassword));
 router.post("/two-factor/setup", requireLogin, loginLimiter, asyncHandler(setupTwoFactor));
 router.post("/two-factor/enable", requireLogin, loginLimiter, enableTwoFactor);
 router.post("/two-factor/disable", requireLogin, loginLimiter, disableTwoFactor);
