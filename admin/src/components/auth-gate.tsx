@@ -9,8 +9,9 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { ShieldCheck } from "lucide-react";
-import { ApiError, getMe, login, logout, type Staff } from "@/lib/api";
+import Image from "next/image";
+import { Eye, EyeOff, Smartphone } from "lucide-react";
+import { ApiError, getMe, login, logout, type Role, type Staff } from "@/lib/api";
 import TwoFactorSetup from "@/components/two-factor-setup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,13 @@ export const useStaff = () => {
   return value;
 };
 
+/*--What each role is called and allowed to do, in plain words--*/
+export const roleInfo: Record<Role, { label: string; can: string }> = {
+  staff: { label: "Reviewer", can: "Can open and check applications, and confirm possible duplicates." },
+  approver: { label: "Approver", can: "Everything a reviewer can do, plus approve or reject applications, issue or cancel certificates, and see full ID numbers." },
+  admin: { label: "Administrator", can: "Everything an approver can do, plus add or remove staff and read the activity log." },
+};
+
 /*--Can this role do it?--*/
 export const can = (staff: Staff, action: "approve" | "admin") =>
   action === "admin"
@@ -43,6 +51,7 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (staff: Staff) => void }) {
   const [busy, setBusy] = useState(false);
   // After a right password, accounts with two-factor login also need the code from the app
   const [needCode, setNeedCode] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -70,11 +79,14 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (staff: Staff) => void }) {
   };
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center">
-      <Card className="w-full max-w-sm">
+    <Centered>
+      <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
-          <ShieldCheck className="mx-auto size-10 text-primary" />
-          <CardTitle>BSREA Staff Login</CardTitle>
+          <Image src="/logo.png" alt="BSREA" width={116} height={90} className="mx-auto" priority />
+          <CardTitle className="mt-2 text-xl">Staff sign in</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {needCode ? "One more step: open the authenticator app on your phone." : "Use the email and password your administrator gave you."}
+          </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
@@ -88,22 +100,37 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (staff: Staff) => void }) {
                 type="email"
                 autoComplete="username"
                 required
+                className="h-11"
               />
             </div>
             <div className="space-y-1.5">
               <label htmlFor="password" className="text-sm font-medium">
                 Password
               </label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  className="h-11 pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1.5 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
             {needCode && (
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 rounded-lg border border-primary/30 bg-accent/50 p-3">
+                <p className="flex items-center gap-2 text-sm">
+                  <Smartphone className="size-4 text-primary" /> Type the 6-digit number the app shows for BSREA.
+                </p>
                 <label htmlFor="code" className="text-sm font-medium">
                   Code from your authenticator app
                 </label>
@@ -116,22 +143,28 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (staff: Staff) => void }) {
                   placeholder="123456"
                   required
                   autoFocus
+                  className="h-11 text-center font-mono text-lg tracking-[0.4em]"
                 />
               </div>
             )}
             {error && (
-              <p role="alert" className="text-sm text-destructive">
+              <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
               </p>
             )}
-            <Button type="submit" className="w-full" disabled={busy}>
+            <Button type="submit" className="h-11 w-full text-base" disabled={busy}>
               {busy ? "Logging in…" : "Log in"}
             </Button>
+            <p className="text-center text-xs text-muted-foreground">Forgot your password or lost your phone? Ask an administrator to help you.</p>
           </form>
         </CardContent>
       </Card>
-    </div>
+    </Centered>
   );
+}
+
+function Centered({ children }: { children: ReactNode }) {
+  return <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-accent via-background to-background p-4">{children}</div>;
 }
 
 export default function AuthGate({ children }: { children: ReactNode }) {
@@ -154,14 +187,30 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   useEffect(refresh, [refresh]);
 
   if (backendDown)
-    return <p className="py-20 text-center text-destructive">{backendDown}</p>;
+    return (
+      <Centered>
+        <Card className="w-full max-w-md text-center">
+          <CardContent className="space-y-4">
+            <p className="font-medium">The staff panel can&apos;t reach the server</p>
+            <p className="text-sm text-muted-foreground">{backendDown}</p>
+            <Button variant="outline" onClick={refresh}>
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
+      </Centered>
+    );
   if (staff === undefined)
-    return <p className="py-20 text-center text-muted-foreground">Loading…</p>;
+    return (
+      <Centered>
+        <p className="text-muted-foreground">Loading…</p>
+      </Centered>
+    );
   if (!staff) return <LoginForm onLoggedIn={setStaff} />;
   if (staff.twoFactorRequired && !staff.twoFactor) {
     return (
-      <div className="flex min-h-[70vh] items-center justify-center">
-        <Card className="w-full max-w-md">
+      <Centered>
+        <Card className="w-full max-w-md shadow-lg">
           <CardHeader>
             <CardTitle>Set up two-factor login</CardTitle>
           </CardHeader>
@@ -183,7 +232,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </Centered>
     );
   }
   return (

@@ -15,6 +15,10 @@ describe("production settings check", () => {
     expect(productionProblems(good)).toEqual([]);
   });
 
+  it("allows http only for this machine (the staff panel through an SSH tunnel)", () => {
+    expect(productionProblems({ ...good, CORS_ORIGINS: `${good.CORS_ORIGINS},http://localhost:8081` })).toEqual([]);
+  });
+
   it("checks nothing outside production", () => {
     expect(productionProblems({ NODE_ENV: "development" })).toEqual([]);
     expect(productionProblems({})).toEqual([]);
@@ -28,6 +32,7 @@ describe("production settings check", () => {
   it("requires https website addresses, not the localhost defaults", () => {
     expect(productionProblems({ ...good, CORS_ORIGINS: undefined })).toHaveLength(1);
     expect(productionProblems({ ...good, CORS_ORIGINS: "http://localhost:3004" })).toHaveLength(1);
+    expect(productionProblems({ ...good, CORS_ORIGINS: "https://bsreabd.org,http://evil.example" })).toHaveLength(1);
     expect(productionProblems({ ...good, PUBLIC_SITE_URL: undefined })).toHaveLength(1);
     expect(productionProblems({ ...good, PUBLIC_SITE_URL: "http://localhost:3004" })).toHaveLength(1);
   });

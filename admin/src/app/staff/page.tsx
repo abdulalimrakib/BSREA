@@ -2,155 +2,78 @@
 
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { ShieldAlert, UserPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { can, useStaff } from "@/components/auth-gate";
-import { formatDateTime, Loading, useApi } from "@/components/common";
-import TwoFactorSetup from "@/components/two-factor-setup";
-import {
-  changePassword,
-  createStaff,
-  deactivateStaff,
-  disableTwoFactor,
-  getStaff,
-  resetStaffTwoFactor,
-  type Role,
-} from "@/lib/api";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { can, roleInfo, useStaff } from "@/components/auth-gate";
+import { ConfirmDialog, EmptyState, Field, Loading, PageHeader, timeAgo, formatDateTime, useApi } from "@/components/common";
+import { createStaff, deactivateStaff, getStaff, resetStaffTwoFactor, type Role, type StaffAccount } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
-function TwoFactor() {
-  const { staff, refresh } = useStaff();
+function AddStaff({ onAdded, onCancel }: { onAdded: () => void; onCancel: () => void }) {
+  const [role, setRole] = useState<Role>("staff");
   const [busy, setBusy] = useState(false);
-  const onDisable = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    setBusy(true);
-    try {
-      await disableTwoFactor(
-        String(data.get("password")),
-        String(data.get("code")),
-      );
-      toast.success("Two-factor login is off");
-      refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not turn it off");
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          Two-factor login{" "}
-          {staff.twoFactor ? (
-            <span className="ml-2 text-sm font-normal text-green-700">On</span>
-          ) : (
-            <span className="ml-2 text-sm font-normal text-destructive">
-              Off
-            </span>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {!staff.twoFactor ? (
-          <TwoFactorSetup
-            onDone={() => {
-              toast.success(
-                "Two-factor login is on. Other sessions were logged out.",
-              );
-              refresh();
-            }}
-          />
-        ) : staff.twoFactorRequired ? (
-          <p className="text-sm text-muted-foreground">
-            Each login asks for a code from your authenticator app. It is
-            required for all staff. Lost your phone? Ask an admin to reset it.
-          </p>
-        ) : (
-          <form onSubmit={onDisable} className="flex flex-wrap items-end gap-3">
-            <Input
-              name="password"
-              type="password"
-              placeholder="Password"
-              autoComplete="current-password"
-              required
-              className="max-w-[200px]"
-              aria-label="Password"
-            />
-            <Input
-              name="code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="Code"
-              required
-              className="max-w-[120px]"
-              aria-label="Code"
-            />
-            <Button type="submit" variant="outline" disabled={busy}>
-              Turn off
-            </Button>
-          </form>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
-function ChangePassword() {
-  const [busy, setBusy] = useState(false);
-  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const onCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
-    const data = new FormData(form);
+    const d = new FormData(form);
     setBusy(true);
     try {
-      await changePassword(
-        String(data.get("current")),
-        String(data.get("next")),
-      );
-      toast.success("Password changed. Other sessions were logged out.");
+      await createStaff({ email: String(d.get("email")), name: String(d.get("name")), role, password: String(d.get("password")) });
+      toast.success("Account created. Now give them their email and temporary password.");
       form.reset();
+      onAdded();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not change password");
+      toast.error(e instanceof Error ? e.message : "Could not create the account");
     } finally {
       setBusy(false);
     }
   };
+
   return (
-    <Card>
+    <Card className="border-primary/40">
       <CardHeader>
-        <CardTitle>Change my password</CardTitle>
+        <CardTitle>Add a staff member</CardTitle>
+        <CardDescription>They will log in with this email and the temporary password. Ask them to change it from “My account” straight away.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-3">
-          <Input
-            name="current"
-            type="password"
-            placeholder="Current password"
-            autoComplete="current-password"
-            required
-            className="max-w-[220px]"
-          />
-          <Input
-            name="next"
-            type="password"
-            placeholder="New password (12+ characters)"
-            autoComplete="new-password"
-            required
-            className="max-w-[260px]"
-          />
-          <Button type="submit" disabled={busy}>
-            Change
-          </Button>
+        <form onSubmit={onCreate} className="space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Full name" htmlFor="s-name">
+              <Input id="s-name" name="name" required minLength={2} />
+            </Field>
+            <Field label="Email" htmlFor="s-email">
+              <Input id="s-email" name="email" type="email" required />
+            </Field>
+          </div>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">What can they do?</legend>
+            <div className="grid gap-3 md:grid-cols-3">
+              {(["staff", "approver", "admin"] as Role[]).map((r) => (
+                <label key={r} className={cn("cursor-pointer rounded-lg border p-3 text-sm transition-colors", role === r ? "border-primary bg-accent ring-2 ring-primary/20" : "hover:bg-muted/60")}>
+                  <span className="flex items-center gap-2 font-medium">
+                    <input type="radio" name="role" value={r} checked={role === r} onChange={() => setRole(r)} className="accent-[var(--primary)]" />
+                    {roleInfo[r].label}
+                  </span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{roleInfo[r].can}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <Field label="Temporary password" htmlFor="s-password" hint="At least 12 characters, with capital and small letters and a number. Tell them in person or by phone rather than writing it in an email.">
+            <Input id="s-password" name="password" type="text" autoComplete="new-password" required minLength={12} className="max-w-sm font-mono" />
+          </Field>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={busy}>
+              {busy ? "Adding…" : "Add staff member"}
+            </Button>
+            <Button type="button" variant="ghost" onClick={onCancel}>
+              Cancel
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>
@@ -160,181 +83,125 @@ function ChangePassword() {
 export default function StaffPage() {
   const { staff } = useStaff();
   const isAdmin = can(staff, "admin");
-  const { data, error, reload } = useApi(
-    () => (isAdmin ? getStaff() : Promise.resolve([])),
-    [isAdmin],
-  );
-  const [role, setRole] = useState<Role>("staff");
+  const { data, error, reload } = useApi(() => (isAdmin ? getStaff() : Promise.resolve([])), [isAdmin]);
+  const [adding, setAdding] = useState(false);
+  const [confirm, setConfirm] = useState<{ kind: "deactivate" | "reset"; user: StaffAccount } | null>(null);
 
-  const onCreate = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const d = new FormData(form);
-    try {
-      await createStaff({
-        email: String(d.get("email")),
-        name: String(d.get("name")),
-        role,
-        password: String(d.get("password")),
-      });
-      toast.success("Account created");
-      form.reset();
-      reload();
-    } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : "Could not create the account",
-      );
-    }
-  };
+  if (!isAdmin)
+    return (
+      <EmptyState icon={ShieldAlert} title="Only administrators can manage staff accounts">
+        To change your own password or phone login, go to <strong>My account</strong>.
+      </EmptyState>
+    );
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Staff accounts</h1>
-      <TwoFactor />
-      <ChangePassword />
-      {isAdmin &&
-        (!data ? (
-          <Loading error={error} />
-        ) : (
-          <>
-            <Card>
-              <CardHeader>
-                <CardTitle>Add a staff account</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form
-                  onSubmit={onCreate}
-                  className="flex flex-wrap items-end gap-3"
-                >
-                  <Input
-                    name="name"
-                    placeholder="Name"
-                    required
-                    className="max-w-[200px]"
-                  />
-                  <Input
-                    name="email"
-                    type="email"
-                    placeholder="Email"
-                    required
-                    className="max-w-[240px]"
-                  />
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as Role)}
-                    className="h-9 rounded-md border bg-transparent px-2 text-sm"
-                  >
-                    <option value="staff">Staff (review)</option>
-                    <option value="approver">Approver</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                  <Input
-                    name="password"
-                    type="password"
-                    placeholder="Temporary password"
-                    autoComplete="new-password"
-                    required
-                    className="max-w-[220px]"
-                  />
-                  <Button type="submit">Add</Button>
-                </form>
-              </CardContent>
-            </Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Two-factor</TableHead>
-                  <TableHead>Last login</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((u) => (
-                  <TableRow
-                    key={u.id}
-                    className={u.is_active ? undefined : "opacity-50"}
-                  >
-                    <TableCell className="font-medium">{u.name}</TableCell>
-                    <TableCell>{u.email}</TableCell>
-                    <TableCell className="capitalize">{u.role}</TableCell>
-                    <TableCell className="text-xs">
-                      {u.totp_enabled ? (
-                        "On"
-                      ) : (
-                        <span className="text-destructive">Off</span>
+      <PageHeader title="Staff accounts" description="Everyone who can log in to this panel, and what they are allowed to do.">
+        {!adding && (
+          <Button onClick={() => setAdding(true)}>
+            <UserPlus /> Add staff member
+          </Button>
+        )}
+      </PageHeader>
+
+      {adding && (
+        <AddStaff
+          onAdded={() => {
+            setAdding(false);
+            reload();
+          }}
+          onCancel={() => setAdding(false)}
+        />
+      )}
+
+      {!data ? (
+        <Loading error={error} onRetry={reload} />
+      ) : (
+        <Card className="gap-0 overflow-hidden py-0">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead className="pl-4">Name</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Phone login</TableHead>
+                <TableHead className="hidden md:table-cell">Last login</TableHead>
+                <TableHead className="pr-4 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((u) => {
+                const me = u.id === staff.id;
+                return (
+                  <TableRow key={u.id} className={u.is_active ? undefined : "opacity-60"}>
+                    <TableCell className="py-3 pl-4">
+                      <div className="font-medium">
+                        {u.name} {me && <span className="text-xs font-normal text-muted-foreground">(you)</span>}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{u.email}</div>
+                    </TableCell>
+                    <TableCell className="text-sm" title={roleInfo[u.role]?.can}>
+                      {roleInfo[u.role]?.label ?? u.role}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {u.totp_enabled ? <span className="text-green-700 dark:text-green-400">Set up</span> : <span className="text-amber-700 dark:text-amber-400">Not set up yet</span>}
+                    </TableCell>
+                    <TableCell className="hidden text-sm md:table-cell" title={formatDateTime(u.last_login_at)}>
+                      {u.last_login_at ? timeAgo(u.last_login_at) : "Never"}
+                    </TableCell>
+                    <TableCell className="pr-4">
+                      {!u.is_active ? (
+                        <p className="text-right text-xs">Deactivated</p>
+                      ) : me ? null : (
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          {!!u.totp_enabled && (
+                            <Button size="sm" variant="outline" onClick={() => setConfirm({ kind: "reset", user: u })} title="Use this if they lost or changed their phone">
+                              Reset phone login
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setConfirm({ kind: "deactivate", user: u })}>
+                            <X /> Deactivate
+                          </Button>
+                        </div>
                       )}
-                      {u.totp_enabled && u.id !== staff.id ? (
-                        <Button
-                          size="sm"
-                          variant="link"
-                          className="ml-1 h-auto p-0 text-xs"
-                          onClick={async () => {
-                            if (
-                              !window.confirm(
-                                `Reset two-factor login for ${u.name}? Use this if they lost their phone. They will be logged out and set it up again at their next login.`,
-                              )
-                            )
-                              return;
-                            try {
-                              await resetStaffTwoFactor(u.id);
-                              toast.success("Reset");
-                              reload();
-                            } catch (e) {
-                              toast.error(
-                                e instanceof Error
-                                  ? e.message
-                                  : "Could not reset",
-                              );
-                            }
-                          }}
-                        >
-                          (reset)
-                        </Button>
-                      ) : null}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {formatDateTime(u.last_login_at)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {u.is_active && u.id !== staff.id ? (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive"
-                          onClick={async () => {
-                            if (
-                              !window.confirm(
-                                `Deactivate ${u.name}? They will be logged out.`,
-                              )
-                            )
-                              return;
-                            try {
-                              await deactivateStaff(u.id);
-                              reload();
-                            } catch (e) {
-                              toast.error(
-                                e instanceof Error
-                                  ? e.message
-                                  : "Could not deactivate",
-                              );
-                            }
-                          }}
-                        >
-                          Deactivate
-                        </Button>
-                      ) : !u.is_active ? (
-                        <span className="text-xs">Deactivated</span>
-                      ) : null}
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </>
-        ))}
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
+
+      <ConfirmDialog
+        open={confirm?.kind === "reset"}
+        onClose={() => setConfirm(null)}
+        title={`Reset phone login for ${confirm?.user.name}?`}
+        confirmLabel="Reset phone login"
+        onConfirm={async () => {
+          if (!confirm) return;
+          await resetStaffTwoFactor(confirm.user.id);
+          toast.success(`Phone login reset for ${confirm.user.name}`);
+          reload();
+        }}
+      >
+        <p>Use this when they lost or replaced their phone. They will be logged out, and the next time they log in they will scan a new QR code with their new phone.</p>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirm?.kind === "deactivate"}
+        onClose={() => setConfirm(null)}
+        title={`Deactivate ${confirm?.user.name}?`}
+        tone="danger"
+        confirmLabel="Deactivate account"
+        onConfirm={async () => {
+          if (!confirm) return;
+          await deactivateStaff(confirm.user.id);
+          toast.success(`${confirm.user.name} can no longer log in`);
+          reload();
+        }}
+      >
+        <p>They will be logged out straight away and can&apos;t log in again. Everything they did stays in the activity log.</p>
+      </ConfirmDialog>
     </div>
   );
 }

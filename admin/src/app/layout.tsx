@@ -4,7 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/_providers/themeProvider";
 import { Toaster } from "sonner";
-import Navbar from "@/components/navbar";
+import AppShell from "@/components/navbar";
 import AuthGate from "@/components/auth-gate";
 
 const inter = Inter({
@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BSREA Admin",
+  title: "BSREA Staff Panel",
   description: "BSREA staff panel",
   robots: { index: false, follow: false },
 };
@@ -32,10 +32,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthGate>
-            <Navbar />
-            <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+            <AppShell>{children}</AppShell>
           </AuthGate>
-          <Toaster richColors />
+          <Toaster richColors closeButton position="top-center" />
         </ThemeProvider>
       </body>
     </html>

@@ -64,8 +64,11 @@ export const productionProblems = (env: NodeJS.ProcessEnv = process.env): string
   if (!(Number(env.TRUST_PROXY) >= 1)) problems.push("TRUST_PROXY must be 1 (the API runs behind nginx)");
   const origins = (env.CORS_ORIGINS ?? "").split(",").map((o) => o.trim()).filter(Boolean);
   if (!origins.length) problems.push("CORS_ORIGINS must list the websites, e.g. https://bsreabd.org,https://admin.bsreabd.org");
-  else if (origins.some((o) => !o.startsWith("https://")))
-    problems.push("CORS_ORIGINS must contain https:// addresses only");
+  // http is allowed only for this machine itself (e.g. the staff panel reached through an SSH tunnel on localhost:8081)
+  else if (origins.some((o) => !o.startsWith("https://") && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o)))
+    problems.push("CORS_ORIGINS must contain https:// addresses (http:// only for localhost)");
+  else if (!origins.some((o) => o.startsWith("https://")))
+    problems.push("CORS_ORIGINS must list the websites' https:// addresses");
   if (!env.PUBLIC_SITE_URL?.startsWith("https://"))
     problems.push("PUBLIC_SITE_URL must be the public website's https:// address (it goes in certificate QR codes)");
   return problems;

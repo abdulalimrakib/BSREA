@@ -38,9 +38,9 @@ export default function TwoFactorSetup({ onDone }: { onDone: () => void }) {
         className="space-y-3"
       >
         <p className="text-sm text-muted-foreground">
-          You will need an authenticator app on your phone, such as Google
-          Authenticator, Microsoft Authenticator or Authy. Confirm your password
-          to start.
+          You need a free authenticator app on your phone, such as Google
+          Authenticator, Microsoft Authenticator or Authy. Install it from the
+          app store first, then type your password here to start.
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <Input
@@ -53,7 +53,7 @@ export default function TwoFactorSetup({ onDone }: { onDone: () => void }) {
             aria-label="Your password"
           />
           <Button type="submit" disabled={busy}>
-            Start
+            {busy ? "Please wait…" : "Start"}
           </Button>
         </div>
         {error && (
@@ -72,12 +72,15 @@ export default function TwoFactorSetup({ onDone }: { onDone: () => void }) {
       )}
       className="space-y-4"
     >
-      <ol className="list-decimal space-y-1 pl-5 text-sm">
-        <li>
-          Open the authenticator app and add an account by scanning this QR
-          code.
+      <ol className="space-y-2 text-sm">
+        <li className="flex gap-3">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">1</span>
+          Open the authenticator app on your phone and press <strong>+</strong> (add account), then scan this QR code with it.
         </li>
-        <li>Type the 6-digit code the app shows.</li>
+        <li className="flex gap-3">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">2</span>
+          Type the 6-digit number the app now shows for BSREA. It changes every 30 seconds; any current one works.
+        </li>
       </ol>
       {/* eslint-disable-next-line @next/next/no-img-element -- generated QR code (data: URL) */}
       <img
@@ -103,11 +106,11 @@ export default function TwoFactorSetup({ onDone }: { onDone: () => void }) {
           pattern="[0-9 ]{6,7}"
           placeholder="123456"
           required
-          className="max-w-[140px]"
+          className="h-11 max-w-[180px] text-center font-mono text-lg tracking-[0.3em]"
           aria-label="6-digit code"
         />
-        <Button type="submit" disabled={busy}>
-          Turn on
+        <Button type="submit" disabled={busy} className="h-11">
+          {busy ? "Checking…" : "Turn on phone login"}
         </Button>
       </div>
       {error && (
